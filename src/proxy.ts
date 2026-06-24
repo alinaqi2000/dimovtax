@@ -7,6 +7,11 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
   const isPublic = publicPaths.some((p) => pathname.startsWith(p));
 
+  // Already authenticated? Redirect away from /login to dashboard
+  if (pathname === "/login" && req.auth) {
+    return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin));
+  }
+
   if (isPublic) return NextResponse.next();
 
   if (!req.auth) {
