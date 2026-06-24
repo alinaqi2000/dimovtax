@@ -1,0 +1,368 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "DimovTax API",
+    "version": "1.0.0",
+    "description": "REST API for the DimovTax project management platform.\n\n## Authentication\n\nAll endpoints require an active session cookie (Auth.js). Authenticate by sending a POST to `/api/auth/callback/credentials` with `email` and `password` as form-encoded fields. The session cookie is then sent automatically with all subsequent requests.\n\n## Rate Limiting\n\nAll endpoints are rate-limited to **60 requests per minute** per IP. Exceeding the limit returns a `429 Too Many Requests` response.\n\n## Roles\n\n- **admin** — Full access: create, update, and delete users and projects.\n- **member** — Read access to all resources; can create and modify projects but cannot manage users.",
+    "contact": {
+      "name": "DimovTax",
+      "url": "https://github.com/alinaqi2000/dimovtax-dashboard"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "/api",
+      "description": "Relative to current origin"
+    }
+  ],
+  "tags": [
+    { "name": "Projects", "description": "Project management endpoints" },
+    { "name": "Users", "description": "User management endpoints" },
+    { "name": "Stats", "description": "Aggregate statistics" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "sessionAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "authjs.session-token",
+        "description": "Auth.js session cookie obtained by logging in via /api/auth/callback/credentials"
+      }
+    },
+    "schemas": {
+      "Project": {
+        "type": "object",
+        "required": ["id", "name", "status", "deadline", "budget", "assigneeId", "createdAt", "updatedAt"],
+        "properties": {
+          "id": { "type": "string", "description": "CUID identifier", "example": "clxabc123" },
+          "name": { "type": "string", "example": "Website Redesign" },
+          "description": { "type": "string", "nullable": true, "example": "Complete overhaul of the marketing site." },
+          "status": { "$ref": "#/components/schemas/ProjectStatus" },
+          "deadline": { "type": "string", "format": "date-time", "example": "2026-09-15T00:00:00.000Z" },
+          "budget": { "type": "string", "description": "Decimal as string (Prisma serializes Decimal as string)", "example": "45000.00" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "ownerId": { "type": "string", "nullable": true },
+          "assigneeId": { "type": "string" },
+          "assignee": { "$ref": "#/components/schemas/UserBrief" },
+          "owner": { "$ref": "#/components/schemas/UserMini" }
+        }
+      },
+      "ProjectInput": {
+        "type": "object",
+        "required": ["name", "deadline", "assigneeId", "budget"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 120, "example": "Website Redesign" },
+          "description": { "type": "string", "maxLength": 500, "nullable": true, "example": "Complete overhaul of the marketing site." },
+          "status": { "$ref": "#/components/schemas/ProjectStatus" },
+          "deadline": { "type": "string", "minLength": 1, "description": "ISO date string", "example": "2026-09-15" },
+          "assigneeId": { "type": "string", "minLength": 1, "description": "CUID of the assigned user", "example": "clxabc123" },
+          "budget": { "type": "number", "minimum": 0, "description": "Budget in USD", "example": 45000 }
+        }
+      },
+      "ProjectStatus": {
+        "type": "string",
+        "enum": ["active", "on_hold", "completed"],
+        "default": "active"
+      },
+      "User": {
+        "type": "object",
+        "required": ["id", "name", "email", "role", "createdAt", "updatedAt"],
+        "properties": {
+          "id": { "type": "string", "example": "clxabc123" },
+          "name": { "type": "string", "example": "Sarah Chen" },
+          "email": { "type": "string", "format": "email", "example": "sarah.chen@dimovtax.com" },
+          "role": { "$ref": "#/components/schemas/UserRole" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "_count": {
+            "type": "object",
+            "properties": {
+              "assignedProjects": { "type": "integer", "example": 3 },
+              "ownedProjects": { "type": "integer", "example": 0 }
+            }
+          }
+        },
+        "description": "Password hash is never included in responses."
+      },
+      "UserInput": {
+        "type": "object",
+        "required": ["name", "email", "password"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 80, "example": "Jordan Lee" },
+          "email": { "type": "string", "format": "email", "example": "jordan.lee@dimovtax.com" },
+          "role": { "$ref": "#/components/schemas/UserRole" },
+          "password": { "type": "string", "minLength": 8, "description": "Plaintext password (hashed with bcrypt before storage). Required on create, optional on update.", "example": "securepass123" }
+        }
+      },
+      "UserRole": {
+        "type": "string",
+        "enum": ["admin", "member"],
+        "default": "member"
+      },
+      "UserBrief": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "role": { "$ref": "#/components/schemas/UserRole" }
+        }
+      },
+      "UserMini": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" }
+        }
+      },
+      "ProjectStats": {
+        "type": "object",
+        "properties": {
+          "total": { "type": "integer", "example": 15 },
+          "active": { "type": "integer", "example": 5 },
+          "onHold": { "type": "integer", "example": 5 },
+          "completed": { "type": "integer", "example": 5 },
+          "overdue": { "type": "integer", "example": 2 },
+          "totalBudget": { "type": "number", "example": 487000 }
+        }
+      },
+      "PaginatedProjects": {
+        "type": "object",
+        "properties": {
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/Project" } },
+          "pagination": { "$ref": "#/components/schemas/Pagination" }
+        }
+      },
+      "PaginatedUsers": {
+        "type": "object",
+        "properties": {
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/User" } },
+          "pagination": { "$ref": "#/components/schemas/Pagination" }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "page": { "type": "integer", "example": 1 },
+          "limit": { "type": "integer", "example": 10 },
+          "total": { "type": "integer", "example": 15 },
+          "totalPages": { "type": "integer", "example": 2 }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string", "example": "Unauthorized" }
+        }
+      },
+      "ValidationError": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string", "example": "Validation failed" },
+          "details": {
+            "type": "object",
+            "properties": {
+              "formErrors": { "type": "array", "items": { "type": "string" } },
+              "fieldErrors": {
+                "type": "object",
+                "additionalProperties": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          }
+        }
+      },
+      "Success": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true }
+        }
+      }
+    }
+  },
+  "security": [{ "sessionAuth": [] }],
+  "paths": {
+    "/projects": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "List projects",
+        "description": "Returns a paginated, sortable, filterable list of projects. Each project includes its assignee and owner relations.",
+        "parameters": [
+          { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Case-insensitive search on name and description" },
+          { "name": "status", "in": "query", "schema": { "$ref": "#/components/schemas/ProjectStatus" }, "description": "Filter by status" },
+          { "name": "assigneeId", "in": "query", "schema": { "type": "string" }, "description": "Filter by assignee CUID" },
+          { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["name", "deadline", "budget", "status", "createdAt"], "default": "createdAt" }, "description": "Sort field" },
+          { "name": "order", "in": "query", "schema": { "type": "string", "enum": ["asc", "desc"], "default": "desc" }, "description": "Sort direction" },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "minimum": 1, "default": 1 }, "description": "Page number (1-based)" },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 10 }, "description": "Items per page" }
+        ],
+        "responses": {
+          "200": { "description": "Paginated list of projects", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaginatedProjects" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Too many requests", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "post": {
+        "tags": ["Projects"],
+        "summary": "Create project",
+        "description": "Creates a new project. The authenticated user is automatically set as the owner.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProjectInput" } } }
+        },
+        "responses": {
+          "201": { "description": "Project created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Project" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "422": { "description": "Validation failed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationError" } } } },
+          "429": { "description": "Too many requests", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/projects/{id}": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "Get project",
+        "description": "Returns a single project by ID, including assignee and owner relations.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Project CUID" }],
+        "responses": {
+          "200": { "description": "Project found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Project" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Project not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Too many requests", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "put": {
+        "tags": ["Projects"],
+        "summary": "Update project",
+        "description": "Updates an existing project. All fields are required (full replacement).",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Project CUID" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProjectInput" } } }
+        },
+        "responses": {
+          "200": { "description": "Project updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Project" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Project not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "422": { "description": "Validation failed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationError" } } } },
+          "429": { "description": "Too many requests", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "delete": {
+        "tags": ["Projects"],
+        "summary": "Delete project",
+        "description": "Permanently deletes a project. This action cannot be undone.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Project CUID" }],
+        "responses": {
+          "200": { "description": "Project deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Success" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Project not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Too many requests", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/projects/stats": {
+      "get": {
+        "tags": ["Stats", "Projects"],
+        "summary": "Project statistics",
+        "description": "Returns aggregate statistics across all projects: counts by status, overdue count, and total budget.",
+        "responses": {
+          "200": { "description": "Statistics", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ProjectStats" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Too many requests", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "List users",
+        "description": "Returns a paginated, sortable, filterable list of users. Each user includes assigned/owned project counts. Password hashes are never returned.",
+        "parameters": [
+          { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Case-insensitive search on name and email" },
+          { "name": "role", "in": "query", "schema": { "$ref": "#/components/schemas/UserRole" }, "description": "Filter by role" },
+          { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["name", "email", "createdAt"], "default": "createdAt" }, "description": "Sort field" },
+          { "name": "order", "in": "query", "schema": { "type": "string", "enum": ["asc", "desc"], "default": "desc" }, "description": "Sort direction" },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "minimum": 1, "default": 1 }, "description": "Page number (1-based)" },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 10 }, "description": "Items per page" }
+        ],
+        "responses": {
+          "200": { "description": "Paginated list of users", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaginatedUsers" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Too many requests", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "post": {
+        "tags": ["Users"],
+        "summary": "Create user",
+        "description": "Creates a new team member. Password is hashed with bcrypt (10 rounds). Requires admin role.",
+        "security": [{ "sessionAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserInput" } } }
+        },
+        "responses": {
+          "201": { "description": "User created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Forbidden — admin role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Email already in use", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "422": { "description": "Validation failed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationError" } } } },
+          "429": { "description": "Too many requests", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get user",
+        "description": "Returns a single user by ID, including project counts. Password hash is never returned.",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "description": "User CUID" }],
+        "responses": {
+          "200": { "description": "User found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "User not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Too many requests", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Update user",
+        "description": "Updates an existing user. If password is omitted, the existing hash is kept. Requires admin role.",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "description": "User CUID" }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserInput" } } }
+        },
+        "responses": {
+          "200": { "description": "User updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Forbidden — admin role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "User not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "Email already in use", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "422": { "description": "Validation failed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationError" } } } },
+          "429": { "description": "Too many requests", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Delete user",
+        "description": "Permanently deletes a user. Cannot delete yourself, and cannot delete a user with assigned projects (reassign first). Requires admin role.",
+        "security": [{ "sessionAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" }, "description": "User CUID" }],
+        "responses": {
+          "200": { "description": "User deleted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Success" } } } },
+          "400": { "description": "Cannot delete your own account", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "401": { "description": "Unauthorized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Forbidden — admin role required", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "User not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "User has assigned projects — reassign first", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "description": "Too many requests", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    }
+  }
+}

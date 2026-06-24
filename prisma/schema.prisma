@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProjectStatus {
+  active
+  on_hold
+  completed
+}
+
+enum UserRole {
+  admin
+  member
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      UserRole @default(member)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownedProjects  Project[] @relation("OwnedProjects")
+  assignedProjects Project[] @relation("AssignedProjects")
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  status      ProjectStatus @default(active)
+  deadline    DateTime
+  budget      Decimal       @db.Decimal(12, 2)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  ownerId     String?
+  owner       User?         @relation("OwnedProjects", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  assigneeId  String
+  assignee    User          @relation("AssignedProjects", fields: [assigneeId], references: [id], onDelete: Restrict)
+
+  @@index([status])
+  @@index([ownerId])
+  @@index([assigneeId])
+}

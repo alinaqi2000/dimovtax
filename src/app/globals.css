@@ -1,0 +1,348 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.15 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0 0);
+  --primary: oklch(0.15 0 0);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.96 0 0);
+  --secondary-foreground: oklch(0.2 0 0);
+  --muted: oklch(0.96 0 0);
+  --muted-foreground: oklch(0.52 0 0);
+  --accent: oklch(0.94 0 0);
+  --accent-foreground: oklch(0.2 0 0);
+  --destructive: oklch(0.58 0.22 27);
+  --border: oklch(0.9 0 0);
+  --input: oklch(0.9 0 0);
+  --ring: oklch(0.15 0 0);
+  --chart-1: oklch(0.15 0 0);
+  --chart-2: oklch(0.45 0 0);
+  --chart-3: oklch(0.65 0 0);
+  --chart-4: oklch(0.75 0 0);
+  --chart-5: oklch(0.85 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.98 0 0);
+  --sidebar-foreground: oklch(0.15 0 0);
+  --sidebar-primary: oklch(0.15 0 0);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.94 0 0);
+  --sidebar-accent-foreground: oklch(0.2 0 0);
+  --sidebar-border: oklch(0.9 0 0);
+  --sidebar-ring: oklch(0.15 0 0);
+}
+
+.dark {
+  --background: oklch(0.12 0 0);
+  --foreground: oklch(0.97 0 0);
+  --card: oklch(0.17 0 0);
+  --card-foreground: oklch(0.97 0 0);
+  --popover: oklch(0.17 0 0);
+  --popover-foreground: oklch(0.97 0 0);
+  --primary: oklch(0.97 0 0);
+  --primary-foreground: oklch(0.12 0 0);
+  --secondary: oklch(0.24 0 0);
+  --secondary-foreground: oklch(0.97 0 0);
+  --muted: oklch(0.24 0 0);
+  --muted-foreground: oklch(0.68 0 0);
+  --accent: oklch(0.28 0 0);
+  --accent-foreground: oklch(0.97 0 0);
+  --destructive: oklch(0.7 0.19 22);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.97 0 0);
+  --chart-1: oklch(0.97 0 0);
+  --chart-2: oklch(0.7 0 0);
+  --chart-3: oklch(0.5 0 0);
+  --chart-4: oklch(0.35 0 0);
+  --chart-5: oklch(0.25 0 0);
+  --sidebar: oklch(0.15 0 0);
+  --sidebar-foreground: oklch(0.97 0 0);
+  --sidebar-primary: oklch(0.97 0 0);
+  --sidebar-primary-foreground: oklch(0.12 0 0);
+  --sidebar-accent: oklch(0.25 0 0);
+  --sidebar-accent-foreground: oklch(0.97 0 0);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.97 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  a {
+    cursor: pointer;
+  }
+}
+
+/* ── Swagger UI theme integration ──────────────────────────── */
+.swagger-wrapper .swagger-ui {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/* Hide the default green top bar */
+.swagger-wrapper .swagger-ui .topbar { display: none; }
+
+/* Main info / scheme sections — transparent so app bg shows through */
+.swagger-wrapper .swagger-ui .scheme-container,
+.swagger-wrapper .swagger-ui .info,
+.swagger-wrapper .swagger-ui .wrapper > section > div:first-child {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Headings, paragraphs, labels use foreground color */
+.swagger-wrapper .swagger-ui .info .title,
+.swagger-wrapper .swagger-ui .info .lead,
+.swagger-wrapper .swagger-ui .info p,
+.swagger-wrapper .swagger-ui .info li,
+.swagger-wrapper .swagger-ui .opblock .opblock-summary-path,
+.swagger-wrapper .swagger-ui .opblock .opblock-summary-description,
+.swagger-wrapper .swagger-ui .opblock-tag,
+.swagger-wrapper .swagger-ui .opblock-tag small,
+.swagger-wrapper .swagger-ui .tab li,
+.swagger-wrapper .swagger-ui .tab li a,
+.swagger-wrapper .swagger-ui .btn,
+.swagger-wrapper .swagger-ui .parameters-col_description,
+.swagger-wrapper .swagger-ui .parameter__name,
+.swagger-wrapper .swagger-ui .parameter__in,
+.swagger-wrapper .swagger-ui .parameter__type,
+.swagger-wrapper .swagger-ui .table-col_header,
+.swagger-wrapper .swagger-ui .response-col_description,
+.swagger-wrapper .swagger-ui .response-col_status,
+.swagger-wrapper .swagger-ui .model-title,
+.swagger-wrapper .swagger-ui .model-box *,
+.swagger-wrapper .swagger-ui .models-control,
+.swagger-wrapper .swagger-ui section.models h4 {
+  color: var(--foreground);
+}
+
+/* Muted text: parameter types, descriptions, table headers */
+.swagger-wrapper .swagger-ui .parameter__type,
+.swagger-wrapper .swagger-ui .parameter__in,
+.swagger-wrapper .swagger-ui .parameters-col_description p,
+.swagger-wrapper .swagger-ui .table-col_header,
+.swagger-wrapper .swagger-ui .info .baseurl,
+.swagger-wrapper .swagger-ui .opblock .opblock-summary-description {
+  color: var(--muted-foreground);
+}
+
+/* Links */
+.swagger-wrapper .swagger-ui a { color: var(--primary); }
+
+/* Borders throughout */
+.swagger-wrapper .swagger-ui .opblock,
+.swagger-wrapper .swagger-ui .opblock .opblock-summary,
+.swagger-wrapper .swagger-ui .opblock-section-header,
+.swagger-wrapper .swagger-ui section.models,
+.swagger-wrapper .swagger-ui section.models .model-box,
+.swagger-wrapper .swagger-ui .responses-wrapper .responses-table,
+.swagger-wrapper .swagger-ui .parameters-container .table,
+.swagger-wrapper .swagger-ui table thead tr td,
+.swagger-wrapper .swagger-ui table thead tr th,
+.swagger-wrapper .swagger-ui table tbody tr td,
+.swagger-wrapper .swagger-ui .download-contents,
+.swagger-wrapper .swagger-ui .scheme-container {
+  border-color: var(--border);
+}
+
+/* Operation blocks — subtle card background, keep method color bar */
+.swagger-wrapper .swagger-ui .opblock {
+  background: var(--card);
+  box-shadow: none;
+  border-color: var(--border);
+}
+
+.swagger-wrapper .swagger-ui .opblock .opblock-summary {
+  border-color: var(--border);
+}
+
+/* Keep method badge colors but soften background */
+.swagger-wrapper .swagger-ui .opblock .opblock-summary-method {
+  box-shadow: none;
+  font-weight: 700;
+}
+
+/* Expand/collapse arrows */
+.swagger-wrapper .swagger-ui .arrow { fill: var(--muted-foreground); }
+.swagger-wrapper .swagger-ui .arrow:hover { fill: var(--foreground); }
+
+/* Code blocks & response examples */
+.swagger-wrapper .swagger-ui .opblock-body pre,
+.swagger-wrapper .swagger-ui .model-box,
+.swagger-wrapper .swagger-ui .highlight-code,
+.swagger-wrapper .swagger-ui .microlight {
+  background: var(--muted);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+
+/* Inputs, selects, textareas */
+.swagger-wrapper .swagger-ui input[type=text],
+.swagger-wrapper .swagger-ui input[type=email],
+.swagger-wrapper .swagger-ui input[type=password],
+.swagger-wrapper .swagger-ui select,
+.swagger-wrapper .swagger-ui textarea {
+  background: var(--card);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+.swagger-wrapper .swagger-ui select option {
+  background: var(--card);
+  color: var(--foreground);
+}
+
+/* Buttons */
+.swagger-wrapper .swagger-ui .btn {
+  border-color: var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: none;
+}
+
+.swagger-wrapper .swagger-ui .btn.authorize {
+  border-color: var(--border);
+  background: var(--card);
+  color: var(--foreground);
+}
+
+.swagger-wrapper .swagger-ui .btn.authorize svg { fill: var(--primary); }
+
+.swagger-wrapper .swagger-ui .btn:hover {
+  background: var(--accent);
+  border-color: var(--border);
+}
+
+/* Models section */
+.swagger-wrapper .swagger-ui section.models {
+  background: transparent;
+  border-color: var(--border);
+}
+
+.swagger-wrapper .swagger-ui section.models .model-container {
+  background: var(--muted);
+  border-color: var(--border);
+}
+
+.swagger-wrapper .swagger-ui .model-box {
+  background: var(--muted);
+}
+
+/* Tables — transparent rows */
+.swagger-wrapper .swagger-ui table tbody tr:nth-child(odd) > td,
+.swagger-wrapper .swagger-ui table tbody tr:nth-child(even) > td {
+  background: transparent;
+}
+
+/* Response status codes — keep Swagger's color coding but ensure readable */
+.swagger-wrapper .swagger-ui .response-col_status .response-undocumented {
+  color: var(--muted-foreground);
+}
+
+/* "Try it out" section */
+.swagger-wrapper .swagger-ui .opblock .opblock-section-header {
+  background: var(--muted);
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+.swagger-wrapper .swagger-ui .opblock .opblock-section-header h4,
+.swagger-wrapper .swagger-ui .opblock .opblock-section-header label {
+  color: var(--foreground);
+}
+
+/* Errors / validation messages */
+.swagger-wrapper .swagger-ui .errors-wrapper {
+  background: var(--muted);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+
+/* Filter input */
+.swagger-wrapper .swagger-ui .filter-container {
+  background: transparent;
+  border-color: var(--border);
+}
+
+.swagger-wrapper .swagger-ui .filter .operation-filter-input {
+  background: var(--card);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+
+/* Server selector dropdown */
+.swagger-wrapper .swagger-ui .servers-title,
+.swagger-wrapper .swagger-ui .servers > label,
+.swagger-wrapper .swagger-ui .servers p {
+  color: var(--muted-foreground);
+}
+
+/* Scrollbar in code blocks */
+.swagger-wrapper .swagger-ui pre::-webkit-scrollbar { height: 6px; width: 6px; }
+.swagger-wrapper .swagger-ui pre::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+.swagger-wrapper .swagger-ui pre::-webkit-scrollbar-track { background: transparent; }

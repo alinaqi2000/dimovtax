@@ -1,0 +1,69 @@
+# ─────────────────────────────────────────────────────────────
+#  DimovTax — Docker Compose
+# ─────────────────────────────────────────────────────────────
+
+services:
+  # ── Database ────────────────────────────────────────────────
+  postgres:
+    image: postgres:17-alpine
+    container_name: dimovtax-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dimovtax
+      POSTGRES_PASSWORD: dimovtax
+      POSTGRES_DB: dimovtax
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dimovtax"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - dimovtax-net
+    ports:
+      - "5432:5432"
+
+  # ── Next.js app (migrates on startup, then serves) ──────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    image: dimovtax-app:latest
+    container_name: dimovtax-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://dimovtax:dimovtax@postgres:5432/dimovtax?schema=public"
+      AUTH_SECRET: "${AUTH_SECRET:-dev-secret-change-in-production-9f3a1c7b2e8d4a6f}"
+      AUTH_TRUST_HOST: "true"
+    ports:
+      - "3000:3000"
+    networks:
+      - dimovtax-net
+
+  # ── One-shot seeder (run with: make seed) ───────────────────
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: seeder
+    container_name: dimovtax-seed
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://dimovtax:dimovtax@postgres:5432/dimovtax?schema=public"
+    profiles: ["seed"]
+    networks:
+      - dimovtax-net
+
+networks:
+  dimovtax-net:
+    driver: bridge
+
+volumes:
+  pgdata:
