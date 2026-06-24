@@ -19,8 +19,7 @@ FROM base AS deps
 
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # ── Builder: compile Next.js + generate Prisma client ─────────
 FROM base AS builder
