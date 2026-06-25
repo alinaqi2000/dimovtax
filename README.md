@@ -9,6 +9,7 @@ A full-stack mini SaaS dashboard for managing projects with status tracking, dea
 - **Database:** PostgreSQL with Prisma ORM 7
 - **Auth:** Auth.js v5 (credentials provider, JWT sessions)
 - **Containerization:** Docker (multi-stage build, standalone output)
+- **CI/CD:** Railway auto-deployment from `main` branch
 
 ## Features
 
