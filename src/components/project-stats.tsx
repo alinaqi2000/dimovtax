@@ -127,7 +127,7 @@ export function ProjectStats({ refreshKey = 0 }: ProjectStatsProps) {
       />
       <StatCard
         label="Total Budget"
-        value={formatCurrency(stats.totalBudget)}
+        value={formatCurrency(stats.totalBudget, { compact: true })}
         icon={DollarSign}
         accent="bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
         delay={250}

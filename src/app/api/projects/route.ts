@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db"
 import { projectSchema, projectQuerySchema } from "@/lib/schemas"
 import { rateLimit } from "@/lib/rate-limit"
 import { requireAuth, isAuthFailure } from "@/lib/auth-guard"
+import { handlePrismaError } from "@/lib/prisma-errors"
 import { Prisma } from "@/generated/prisma/client"
 
 const sortMap: Record<string, string> = {
@@ -89,16 +90,26 @@ export async function POST(request: Request) {
   }
 
   const { deadline, ...rest } = parsed.data
-  const project = await prisma.project.create({
-    data: {
-      ...rest,
-      deadline: new Date(deadline),
-      ownerId: auth.user.id,
-    },
-    include: {
-      assignee: { select: { id: true, name: true, email: true, role: true } },
-    },
-  })
+  try {
+    const project = await prisma.project.create({
+      data: {
+        ...rest,
+        deadline: new Date(deadline),
+        ownerId: auth.user.id,
+      },
+      include: {
+        assignee: { select: { id: true, name: true, email: true, role: true } },
+      },
+    })
 
-  return NextResponse.json(project, { status: 201 })
+    return NextResponse.json(project, { status: 201 })
+  } catch (err) {
+    console.error("POST /api/projects — create failed:", err)
+    const handled = handlePrismaError(err, "project")
+    if (handled) return NextResponse.json({ error: handled.error }, { status: handled.status })
+    return NextResponse.json(
+      { error: "Failed to create project. Please try again." },
+      { status: 500 },
+    )
+  }
 }

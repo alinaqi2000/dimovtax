@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SearchableSelect } from "@/components/ui/searchable-select"
 import {
   Table,
   TableBody,
@@ -28,7 +29,7 @@ import { ProjectForm } from "@/components/project-form"
 import { ProjectStats } from "@/components/project-stats"
 import { ProjectDetailModal } from "@/components/project-detail-modal"
 import { cn, formatCurrency, formatDate, isOverdue } from "@/lib/utils"
-import type { PaginatedResponse, Project, ProjectStatus } from "@/lib/types"
+import type { PaginatedResponse, Project, ProjectStatus, User } from "@/lib/types"
 import { STATUS_LABELS } from "@/lib/types"
 
 type SortField = "name" | "deadline" | "budget" | "status" | "createdAt"
@@ -39,6 +40,8 @@ export function ProjectDashboard() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<ProjectStatus | "all">("all")
+  const [assigneeFilter, setAssigneeFilter] = useState<string>("all")
+  const [users, setUsers] = useState<User[]>([])
   const [sort, setSort] = useState<SortField>("createdAt")
   const [order, setOrder] = useState<"asc" | "desc">("desc")
   const [page, setPage] = useState(1)
@@ -50,10 +53,19 @@ export function ProjectDashboard() {
   const [deleting, setDeleting] = useState(false)
   const [statsKey, setStatsKey] = useState(0)
 
+  // Fetch the user list once for the assignee filter dropdown.
+  useEffect(() => {
+    fetch("/api/users?limit=100")
+      .then((r) => r.json())
+      .then((json) => setUsers(json.data ?? []))
+      .catch(() => {})
+  }, [])
+
   const fetchProjects = useCallback(async () => {
     setLoading(true)
     const params = new URLSearchParams()
     if (statusFilter !== "all") params.set("status", statusFilter)
+    if (assigneeFilter !== "all") params.set("assigneeId", assigneeFilter)
     if (search) params.set("search", search)
     params.set("sort", sort)
     params.set("order", order)
@@ -72,7 +84,7 @@ export function ProjectDashboard() {
     } finally {
       setLoading(false)
     }
-  }, [statusFilter, search, sort, order, page])
+  }, [statusFilter, assigneeFilter, search, sort, order, page])
 
   useEffect(() => {
     const timer = setTimeout(fetchProjects, 200)
@@ -177,6 +189,21 @@ export function ProjectDashboard() {
             ))}
           </SelectContent>
         </Select>
+        <SearchableSelect
+          value={assigneeFilter}
+          onValueChange={(v) => {
+            setAssigneeFilter(v)
+            setPage(1)
+          }}
+          options={[
+            { value: "all", label: "All assignees" },
+            ...users.map((u) => ({ value: u.id, label: u.name, sublabel: u.email })),
+          ]}
+          placeholder="All assignees"
+          searchPlaceholder="Search by name or email…"
+          emptyText="No team members found."
+          className="sm:w-56"
+        />
       </div>
 
       {/* Desktop: table */}

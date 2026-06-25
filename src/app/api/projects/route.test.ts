@@ -28,6 +28,23 @@ vi.mock("@/lib/db", () => ({
 
 vi.mock("@/generated/prisma/client", () => ({
   PrismaClient: vi.fn(),
+  Prisma: {
+    PrismaClientKnownRequestError: class PrismaClientKnownRequestError extends Error {
+      code: string
+      meta?: Record<string, unknown>
+      constructor(message: string, { code }: { code: string }) {
+        super(message)
+        this.name = "PrismaClientKnownRequestError"
+        this.code = code
+      }
+    },
+    PrismaClientValidationError: class PrismaClientValidationError extends Error {
+      constructor(message: string) {
+        super(message)
+        this.name = "PrismaClientValidationError"
+      }
+    },
+  },
 }))
 
 import { auth } from "@/auth"
@@ -95,6 +112,40 @@ describe("GET /api/projects", () => {
           OR: expect.arrayContaining([
             expect.objectContaining({ name: expect.objectContaining({ contains: "website" }) }),
           ]),
+        }),
+      }),
+    )
+  })
+
+  it("applies assignee filter", async () => {
+    mockFindMany.mockResolvedValue([mockProject])
+    mockCount.mockResolvedValue(1)
+
+    await GET(createMockRequest(undefined, "http://localhost/api/projects?assigneeId=user-2"))
+
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ assigneeId: "user-2" }),
+      }),
+    )
+  })
+
+  it("combines status and assignee filters", async () => {
+    mockFindMany.mockResolvedValue([])
+    mockCount.mockResolvedValue(0)
+
+    await GET(
+      createMockRequest(
+        undefined,
+        "http://localhost/api/projects?status=active&assigneeId=user-2",
+      ),
+    )
+
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          status: "active",
+          assigneeId: "user-2",
         }),
       }),
     )
@@ -189,6 +240,51 @@ describe("POST /api/projects", () => {
       createMockRequest({ ...validBody, budget: -100 }, "http://localhost/api/projects"),
     )
     expect(res.status).toBe(422)
+  })
+
+  it("returns 422 for budget exceeding the maximum", async () => {
+    const res = await POST(
+      createMockRequest({ ...validBody, budget: 10_000_000_000 }, "http://localhost/api/projects"),
+    )
+    expect(res.status).toBe(422)
+    const json = await res.json()
+    expect(json.error).toBe("Validation failed")
+  })
+
+  it("returns 400 with a friendly message on assignee foreign key violation", async () => {
+    const { Prisma } = await import("@/generated/prisma/client")
+    mockCreate.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError(
+        "Foreign key constraint violated on the constraint: `Project_assigneeId_fkey`",
+        { code: "P2003" },
+      ),
+    )
+    const res = await POST(createMockRequest(validBody, "http://localhost/api/projects"))
+    expect(res.status).toBe(400)
+    const json = await res.json()
+    expect(json.error).toContain("assignee")
+  })
+
+  it("returns 401 on owner foreign key violation (stale session)", async () => {
+    const { Prisma } = await import("@/generated/prisma/client")
+    mockCreate.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError(
+        "Foreign key constraint violated on the constraint: `Project_ownerId_fkey`",
+        { code: "P2003" },
+      ),
+    )
+    const res = await POST(createMockRequest(validBody, "http://localhost/api/projects"))
+    expect(res.status).toBe(401)
+    const json = await res.json()
+    expect(json.error).toContain("expired")
+  })
+
+  it("returns 500 on an unexpected database error", async () => {
+    mockCreate.mockRejectedValue(new Error("unexpected db failure"))
+    const res = await POST(createMockRequest(validBody, "http://localhost/api/projects"))
+    expect(res.status).toBe(500)
+    const json = await res.json()
+    expect(json.error).toContain("Failed to create project")
   })
 
   it("returns 422 for invalid status", async () => {
@@ -295,6 +391,30 @@ describe("PUT /api/projects/:id", () => {
       { params: Promise.resolve({ id: "proj-1" }) },
     )
     expect(res.status).toBe(400)
+  })
+
+  it("returns 400 with a friendly message on assignee FK violation during update", async () => {
+    const { Prisma } = await import("@/generated/prisma/client")
+    mockFindUnique.mockResolvedValue(mockProject)
+    mockUpdate.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError(
+        "Foreign key constraint violated on the constraint: `Project_assigneeId_fkey`",
+        { code: "P2003" },
+      ),
+    )
+    const res = await PUT(createMockRequest(validBody), { params: Promise.resolve({ id: "proj-1" }) })
+    expect(res.status).toBe(400)
+    const json = await res.json()
+    expect(json.error).toContain("assignee")
+  })
+
+  it("returns 500 on an unexpected database error during update", async () => {
+    mockFindUnique.mockResolvedValue(mockProject)
+    mockUpdate.mockRejectedValue(new Error("unexpected db failure"))
+    const res = await PUT(createMockRequest(validBody), { params: Promise.resolve({ id: "proj-1" }) })
+    expect(res.status).toBe(500)
+    const json = await res.json()
+    expect(json.error).toContain("Failed to update project")
   })
 })
 

@@ -79,6 +79,21 @@ export function ProjectForm({ project, onSaved, onCancel }: ProjectFormProps) {
         validation.setFieldErrors(fieldErrors)
       }
       toast.error(data.error ?? "Something went wrong")
+
+      if (res.status === 401) {
+        try {
+          const csrfRes = await fetch("/api/auth/csrf")
+          const { csrfToken } = await csrfRes.json()
+          await fetch("/api/auth/signout", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ csrfToken, callbackUrl: "/login" }),
+          })
+        } catch {
+          // ignore — redirect will still happen
+        }
+        window.location.assign("/login")
+      }
       setSaving(false)
       return
     }
