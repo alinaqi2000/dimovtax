@@ -14,7 +14,7 @@ A full-stack mini SaaS dashboard for managing projects with status tracking, dea
 
 - Email/password authentication with protected routes
 - Role-based access control (user management is admin-only)
-- Project table with sortable columns, filtering by status, and search
+- Project table with sortable columns, filtering by status and assignee, and search
 - Responsive layout (table on desktop, cards on mobile)
 - Add, edit, and delete projects via modal forms
 - Stats cards (total, active, on hold, completed, overdue, total budget)
@@ -54,7 +54,11 @@ pnpm dev
 | `make down` | Stop containers |
 | `make rebuild` | Rebuild from scratch (wipes database) |
 
-### Demo Credentials
+### Demo URL
+
+<https://dimovtax.up.railway.app/>
+
+**Demo Credentials:**
 
 - **Email:** admin@dimovtax.com
 - **Password:** admin123
@@ -63,7 +67,7 @@ pnpm dev
 
 | Method | Path | Description | Auth |
 |--------|------|-------------|------|
-| `GET` | `/api/projects` | List projects (`status`, `search`, `page`, `limit`) | Any user |
+| `GET` | `/api/projects` | List projects (`status`, `assigneeId`, `search`, `page`, `limit`) | Any user |
 | `POST` | `/api/projects` | Create a project | Any user |
 | `GET` | `/api/projects/:id` | Get a project | Any user |
 | `PUT` | `/api/projects/:id` | Update a project | Any user |
