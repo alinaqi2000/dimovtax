@@ -9,7 +9,10 @@ export const projectSchema = z.object({
   status: z.enum(projectStatuses).default("active"),
   deadline: z.string().min(1, "Deadline is required"),
   assigneeId: z.string().min(1, "Assignee is required"),
-  budget: z.coerce.number().min(0, "Budget must be a positive number"),
+  budget: z.coerce
+    .number()
+    .min(0, "Budget must be a positive number")
+    .max(9_999_999_999, "Budget must be at most $9,999,999,999"),
 })
 
 export type ProjectInput = z.infer<typeof projectSchema>
@@ -74,7 +77,14 @@ export const projectFormSchema = z.object({
   budget: z
     .string()
     .min(1, "Budget is required")
-    .refine((v) => !Number.isNaN(Number(v)) && Number(v) >= 0, "Budget must be a positive number"),
+    .refine(
+      (v) => !Number.isNaN(Number(v)) && Number(v) >= 0,
+      "Budget must be a positive number",
+    )
+    .refine(
+      (v) => Number(v) <= 9_999_999_999,
+      "Budget must be at most $9,999,999,999",
+    ),
 })
 
 export type ProjectFormInput = z.infer<typeof projectFormSchema>
